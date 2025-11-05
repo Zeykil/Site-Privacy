@@ -1,588 +1,266 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  ShieldCheck, 
-  Server, 
-  BookText, // Este ícone estava importado mas não usado, vou manter
-  Menu, 
-  X, 
-  Twitter, 
-  Github, 
-  MessageSquare,
-  ArrowRight,
-  Lock,
-  Terminal, // Novo ícone para a seção de comandos
-  LifeBuoy // Novo ícone para a seção de suporte
-} from 'lucide-react';
-
-/* Componente principal da Aplicação.
-  Isso renderiza todas as seções da página.
-*/
-export default function App() {
-  return (
-    <>
-      {/* Injetamos os estilos globais e animações aqui.
-        Isso nos permite criar o fundo de partículas/estrelas animado
-        e as animações de entrada (fade-in) sem arquivos CSS externos.
-      */}
-      <style>{`
-        /* Importa a fonte Inter do Google Fonts */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        
-        /* NOVO: Adiciona o scroll suave (arrastado) */
-        html {
-          scroll-behavior: smooth;
-        }
-
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoPonto - Recicle e Ganhe</title>
+    <!-- Carrega o Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carrega a fonte Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Define a fonte Inter como padrão */
         body {
-          font-family: 'Inter', sans-serif;
-          /* Cor de fundo base escura */
-          background-color: #020617; /* slate-950 */
-          color: #e2e8f0; /* slate-200 */
+            font-family: 'Inter', sans-serif;
         }
+        /* Efeito de scroll suave */
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+    <script>
+        // Configuração do Tailwind para usar a paleta de cores "emerald"
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        emerald: tailwind.colors.emerald,
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-800">
 
-        .hero-section {
-          /* Esta é a mágica do fundo:
-            1. Um gradiente linear neon (roxo para azul escuro)
-            2. Múltiplas camadas de gradientes radiais para simular estrelas/partículas
-          */
-          background-image:
-            /* Partículas/Estrelas (camadas 1 e 2) */
-            radial-gradient(rgba(0, 242, 255, 0.3), rgba(0, 242, 255, 0) 2px, transparent 40px),
-            radial-gradient(rgba(142, 45, 226, 0.3), rgba(142, 45, 226, 0) 1px, transparent 30px),
-            /* Gradiente de fundo principal */
-            linear-gradient(300deg, #020617, #0c0a1d 30%, #4a044e 100%);
-          
-          background-size: 550px 550px, 350px 350px, 100% 100%;
-          background-position: 0 0, 40px 60px, 0 0;
-          
-          /* Animação que move as "estrelas" */
-          animation: moveStars 120s linear infinite;
-        }
-
-        @keyframes moveStars {
-          from { background-position: 0 0, 40px 60px, 0 0; }
-          to { background-position: -10000px 5000px, -10000px 5000px, 0 0; }
-        }
-
-        /* Animação de entrada (fade in + slide up) */
-        .fade-in-up {
-          animation: fadeInUp 0.8s ease-out forwards;
-          opacity: 0;
-        }
-        
-        /* Classes de atraso para escalonar animações */
-        .delay-100 { animation-delay: 0.1s; }
-        .delay-200 { animation-delay: 0.2s; }
-        .delay-300 { animation-delay: 0.3s; }
-        .delay-400 { animation-delay: 0.4s; }
-        .delay-500 { animation-delay: 0.5s; }
-
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        /* Efeito de brilho (glow) para textos e logo */
-        .text-glow-blue {
-          text-shadow: 0 0 8px rgba(0, 242, 255, 0.6);
-        }
-        .text-glow-purple {
-           text-shadow: 0 0 8px rgba(192, 132, 252, 0.6);
-        }
-        
-        /* Efeito de brilho em borda para os cards */
-        .card-glow-border {
-          border-color: rgba(59, 130, 246, 0.1); /* blue-500 com 10% opacidade */
-          transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-        }
-        .card-glow-border:hover {
-          border-color: rgba(59, 130, 246, 0.4); /* Aumenta opacidade no hover */
-          box-shadow: 0 0 20px rgba(59, 130, 246, 0.1); /* Adiciona sombra/brilho */
-        }
-      `}</style>
-      
-      {/* Container principal da aplicação */}
-      <div className="min-h-screen bg-slate-950">
-        <Navbar />
-        <main>
-          <HeroSection />
-          <FeaturesSection />
-          <CommandsSection /> {/* NOVA SEÇÃO */}
-          <SupportSection />  {/* NOVA SEÇÃO */}
-        </main>
-        <Footer />
-      </div>
-    </>
-  );
-}
-
-// --- Componentes da Página ---
-
-/**
- * Barra de Navegação Fixa
- * Inclui o logo, links de navegação, botão de CTA e menu mobile.
- */
-function Navbar() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // Links atualizados para apontar para as novas seções
-  const navLinks = [
-    { name: 'Início', href: '#' },
-    { name: 'Comandos', href: '#commands' }, // ATUALIZADO
-    { name: 'Painel', href: '#' },
-    { name: 'Suporte', href: '#support' }, // ATUALIZADO
-  ];
-
-  return (
-    <header className="fixed top-0 left-0 w-full z-50">
-      <nav className="backdrop-blur-lg bg-slate-950/70 border-b border-blue-900/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            
-            {/* Logo */}
-            <a href="#" className="flex-shrink-0 flex items-center gap-2">
-              <Lock className="w-7 h-7 text-blue-400 text-glow-blue" />
-              <span className="text-2xl font-black text-white text-glow-blue">
-                Privacy
-              </span>
+    <!-- Cabeçalho (Navbar) -->
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <nav class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#" class="text-3xl font-bold text-emerald-600">
+                EcoPonto
             </a>
-            
-            {/* Links Desktop */}
-            <div className="hidden md:flex md:items-center md:space-x-8">
-              {navLinks.map((link) => (
-                <a
-                  key={link.name}
-                  href={link.href}
-                  className="text-gray-300 hover:text-white transition-colors duration-200"
-                >
-                  {link.name}
+            <div class="flex items-center space-x-4">
+                <a href="#features" class="text-gray-600 hover:text-emerald-600 transition duration-300 hidden md:block">Funcionalidades</a>
+                <a href="#cta" class="bg-emerald-600 text-white px-5 py-2 rounded-full font-semibold hover:bg-emerald-700 transition duration-300 shadow-sm">
+                    Baixe o App
                 </a>
-              ))}
             </div>
-            
-            {/* Botão Desktop */}
-            <div className="hidden md:flex items-center">
-              <a
-                href="#"
-                className="ml-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-blue-500 transition-all duration-200"
-              >
-                Adicionar ao Discord
-              </a>
-            </div>
-            
-            {/* Botão Menu Mobile */}
-            <div className="flex md:hidden items-center">
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-                aria-controls="mobile-menu"
-                aria-expanded={isMobileMenuOpen}
-              >
-                <span className="sr-only">Abrir menu principal</span>
-                {isMobileMenuOpen ? (
-                  <X className="block h-6 w-6" aria-hidden="true" />
-                ) : (
-                  <Menu className="block h-6 w-6" aria-hidden="true" />
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        {/* Painel Menu Mobile */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-blue-900/30" id="mobile-menu">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-              {navLinks.map((link) => (
-                <a
-                  key={link.name}
-                  href={link.href}
-                  onClick={() => setIsMobileMenuOpen(false)} // Fecha o menu ao clicar
-                  className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
-                >
-                  {link.name}
-                </a>
-              ))}
-            </div>
-            <div className="pt-4 pb-3 border-t border-gray-700">
-              <a
-                href="#"
-                className="block w-11/12 mx-auto text-center px-4 py-2 border border-transparent text-base font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-blue-500 transition-all duration-200"
-              >
-                Adicionar ao Discord
-              </a>
-            </div>
-          </div>
-        )}
-      </nav>
+        </nav>
     </header>
-  );
-}
 
-/**
- * Seção Hero (Boas-vindas)
- * Com o fundo animado, título principal, CTA e um mockup do Discord.
- */
-function HeroSection() {
-  return (
-    <section className="hero-section relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
-      {/* Overlay de gradiente escuro (opcional, para mais contraste) */}
-      <div className="absolute inset-0 bg-black/30"></div>
-      
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        {/* Título */}
-        <h1 className="text-5xl md:text-7xl font-black text-white fade-in-up text-glow-blue">
-          Proteja seus servidores
-        </h1>
-        <h1 className="text-5xl md:text-7xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 fade-in-up delay-100">
-          com o poder da privacidade.
-        </h1>
-        
-        {/* Descrição */}
-        <p className="mt-6 max-w-2xl mx-auto text-lg md:text-xl text-gray-300 fade-in-up delay-200">
-          Privacy é a solução completa de moderação e segurança projetada para 
-          manter sua comunidade segura e protegida, 24 horas por dia.
-        </p>
-        
-        {/* Botões CTA */}
-        <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4 fade-in-up delay-300">
-          <a
-            href="#"
-            className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-bold rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 transform-gpu transition-all duration-300 hover:scale-105 shadow-2xl shadow-blue-500/20"
-          >
-            Adicionar ao Discord
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </a>
-          <a
-            href="#features"
-            className="inline-flex items-center justify-center px-8 py-3 border border-gray-700 text-base font-medium rounded-lg text-white bg-gray-800/50 backdrop-blur-sm hover:bg-gray-700/70 transform-gpu transition-all duration-300 hover:scale-105"
-          >
-            Explorar Recursos
-          </a>
-        </div>
-
-        {/* Mockup do Discord */}
-        <div className="mt-16 fade-in-up delay-400">
-          <div className="max-w-3xl mx-auto bg-gray-900/70 backdrop-blur-md rounded-xl shadow-2xl shadow-black/30 border border-blue-900/30 overflow-hidden">
-            <div className="flex items-center justify-between p-3 bg-gray-950/50 border-b border-blue-900/30">
-              <div className="flex items-center space-x-2">
-                <span className="w-3 h-3 bg-red-500 rounded-full"></span>
-                <span className="w-3 h-3 bg-yellow-400 rounded-full"></span>
-                <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-              </div>
-              <div className="text-sm text-gray-400">#geral</div>
-              <div className="w-12"></div>
-            </div>
-            <div className="p-4 md:p-6 space-y-4 text-left">
-              {/* Mensagem 1 (Usuário) */}
-              <div className="flex items-start space-x-3">
-                <img className="w-10 h-10 rounded-full" src="https://placehold.co/64x64/7b34dd/ffffff?text=U" alt="[Avatar do Usuário]" />
-                <div>
-                  <span className="text-base font-medium text-white">Usuário</span>
-                  <span className="ml-2 text-xs text-gray-400">Hoje às 15:10</span>
-                  <p className="text-gray-300">Ei, alguém pode me passar um link suspeito?</p>
-                </div>
-              </div>
-              {/* Mensagem 2 (Bot Privacy) */}
-              <div className="flex items-start space-x-3">
-                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
-                  <Lock className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <span className="text-base font-medium text-blue-400">Privacy</span>
-                  <span className="ml-1 text-xs font-medium text-white bg-blue-600 px-1.5 py-0.5 rounded">BOT</span>
-                  <span className="ml-2 text-xs text-gray-400">Hoje às 15:10</span>
-                  <p className="text-red-400 bg-red-900/30 border border-red-500/50 rounded-lg p-3 mt-1">
-                    <span className="font-bold">[ALERTA DE SEGURANÇA]</span> A mensagem do <span className="font-medium text-white">@Usuário</span> foi bloqueada por conter um link malicioso (Phishing).
-                    <br/>
-                    <span className="text-gray-300 text-sm">Ação: Usuário silenciado por 10 minutos.</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/**
- * Seção de Recursos (Features)
- * Exibe os principais recursos do bot em um grid de cards.
- */
-function FeaturesSection() {
-  const features = [
-    {
-      icon: ShieldCheck,
-      title: 'Moderação Avançada',
-      description: 'Sistema de auto-moderação com filtros de spam, links, convites e palavras-chave customizáveis.',
-    },
-    {
-      icon: Server,
-      title: 'Logs Completos',
-      description: 'Registre todas as ações no servidor. Saiba quem baniu, quem deletou mensagens e quem entrou ou saiu.',
-    },
-    {
-      icon: Lock,
-      title: 'Proteção Anti-Raid',
-      description: 'Bloqueie automaticamente ataques de bots e contas falsas, mantendo seu servidor seguro contra invasões.',
-    },
-  ];
-
-  return (
-    <section id="features" className="py-24 sm:py-32 bg-slate-950 relative z-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Título da Seção */}
-        <div className="text-center">
-          <h2 className="text-base font-semibold text-blue-400 tracking-wide uppercase">Recursos</h2>
-          <p className="mt-2 text-4xl font-black text-white sm:text-5xl text-glow-purple">
-            Tudo que você precisa
-          </p>
-          <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-400">
-            Um conjunto de ferramentas robustas para garantir a ordem e a segurança.
-          </p>
-        </div>
-        
-        {/* Grid de Features */}
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <div
-              key={feature.title}
-              className={`fade-in-up delay-${(index + 1) * 100} bg-slate-900 p-6 rounded-2xl shadow-2xl shadow-black/20 card-glow-border transform-gpu transition-all duration-300 hover:-translate-y-2`}
-            >
-              <div className="flex-shrink-0">
-                <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-                  <feature.icon className="h-6 w-6" aria-hidden="true" />
-                </div>
-              </div>
-              <div className="mt-4">
-                <h3 className="text-xl font-bold text-white">{feature.title}</h3 >
-                <p className="mt-2 text-base text-gray-400">
-                  {feature.description}
+    <!-- Seção Hero -->
+    <main>
+        <section class="max-w-6xl mx-auto px-6 pt-20 pb-16 flex flex-col lg:flex-row items-center justify-between">
+            <!-- Coluna de Texto -->
+            <div class="lg:w-1/2 text-center lg:text-left mb-12 lg:mb-0">
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-6 leading-tight">
+                    Recicle, Ganhe Prêmios
+                    <span class="text-emerald-600">e Salve o Planeta.</span>
+                </h1>
+                <p class="text-lg text-gray-600 mb-10 max-w-lg mx-auto lg:mx-0">
+                    O EcoPonto é o app que te conecta aos pontos de coleta, recompensa sua atitude sustentável e transforma sua reciclagem em dinheiro.
                 </p>
-              </div>
+                <!-- Botões de Download -->
+                <div class="flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
+                    <a href="#" class="flex items-center justify-center bg-gray-900 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition duration-300 shadow-lg">
+                        <!-- Ícone Apple -->
+                        <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12.001 2.457c-2.43 0-4.22 1.583-5.41 3.936-.128.243-.23.498-.306.762-.63 2.112-1.096 4.344-1.096 6.68 0 4.218 1.81 8.165 4.542 8.165 1.45 0 2.54-1.007 3.999-1.007 1.41 0 2.44 1.007 3.999 1.007 2.782 0 4.542-3.947 4.542-8.165 0-2.336-.465-4.568-1.096-6.68a5.14 5.14 0 0 0-.306-.762C16.22 4.04 14.43 2.457 12.001 2.457Zm-.35 1.543c1.018.01 2.22.67 3.001 1.637-1.11 1.303-1.63 3.05-1.503 4.86.06.87.35 1.71.82 2.41-.95.84-2.18 1.4-3.5 1.41-1.02-.01-2.22-.67-3.001-1.638 1.11-1.303 1.63-3.05 1.503-4.86-.05-.87-.35-1.71-.82-2.41.95-.84 2.18-1.4 3.5-1.41Z"></path></svg>
+                        Baixe na <span class="font-bold ml-1">App Store</span>
+                    </a>
+                    <a href="#" class="flex items-center justify-center bg-gray-900 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition duration-300 shadow-lg">
+                        <!-- Ícone Google Play -->
+                        <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" d="M2.378 1.642c-.59.32-1.018.86-.96 1.581l.012.03.018.055 3.57 6.44-3.57 6.44a1.8 1.8 0 0 0 .96 2.441l.056.03.05.025 11.83-6.143a.35.35 0 0 1 0-.61L2.484 1.696l-.05-.025-.056-.03ZM15.42 12.35l3.57 2.011-3.69 3.69-3.57-3.69 3.69-2.011ZM11.73 12 8.04 8.31l3.69-3.69 3.57 3.69L11.73 12Z" clip-rule="evenodd"></path></svg>
+                        Disponível no <span class="font-bold ml-1">Google Play</span>
+                    </a>
+                </div>
             </div>
-          ))}
-        </div>
-        
-      </div>
-    </section>
-  );
-}
-
-/**
- * NOVA SEÇÃO: Comandos
- * Exibe uma lista de comandos de exemplo.
- */
-function CommandsSection() {
-  // 7 comandos de exemplo como solicitado
-  const commands = [
-    { name: '/lock', description: 'Tranca o canal atual, impedindo mensagens.' },
-    { name: '/unlock', description: 'Destranca o canal atual, permitindo mensagens.' },
-    { name: '/ban', description: 'Bane um usuário permanentemente do servidor.' },
-    { name: '/kick', description: 'Expulsa um usuário do servidor.' },
-    { name: '/mute', description: 'Silencia um usuário por um tempo determinado.' },
-    { name: '/logs', description: 'Mostra os logs de moderação recentes.' },
-    { name: '/clear', description: 'Limpa um número específico de mensagens do chat.' },
-  ];
-
-  return (
-    <section id="commands" className="py-24 sm:py-32 bg-slate-900 relative z-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Título da Seção */}
-        <div className="text-center">
-          <h2 className="text-base font-semibold text-blue-400 tracking-wide uppercase">Comandos</h2>
-          <p className="mt-2 text-4xl font-black text-white sm:text-5xl text-glow-purple">
-            Controle Total
-          </p>
-          <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-400">
-            Comandos intuitivos para gerenciamento fácil e rápido.
-          </p>
-        </div>
-        
-        {/* Grid de Comandos */}
-        <div className="mt-16 max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-          {commands.map((command, index) => (
-            <div
-              key={command.name}
-              className={`fade-in-up delay-${(index + 1) * 100} bg-slate-800 p-5 rounded-lg shadow-lg flex items-center space-x-4 border border-slate-700 hover:border-blue-500 transition-colors duration-200`}
-            >
-              <div className="flex-shrink-0">
-                <Terminal className="h-6 w-6 text-blue-400" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white">{command.name}</h3>
-                <p className="text-base text-gray-400">{command.description}</p>
-              </div>
+            <!-- Coluna da Imagem (Mockup do App) -->
+            <div class="lg:w-1/2 flex justify-center">
+                <img src="https://placehold.co/320x640/e0f2f1/10b981?text=EcoPonto+App" 
+                     alt="Mockup do aplicativo EcoPonto em um smartphone" 
+                     class="rounded-3xl shadow-2xl"
+                     onerror="this.src='https://placehold.co/320x640/e0f2f1/10b981?text=EcoPonto+App'">
             </div>
-          ))}
-        </div>
-        <p className="text-center mt-12 text-gray-400 fade-in-up delay-500">
-          ...e muito mais! Veja a lista completa no painel.
-        </p>
+        </section>
+
+        <!-- Seção de Funcionalidades Principais -->
+        <section id="features" class="py-20 bg-white">
+            <div class="max-w-6xl mx-auto px-6">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-center text-gray-900 mb-4">
+                    Um app completo para sua jornada
+                </h2>
+                <p class="text-lg text-gray-600 text-center mb-16 max-w-2xl mx-auto">
+                    Do mapa de coleta à carteira digital, temos tudo que você precisa para reciclar de forma inteligente.
+                </p>
+                <!-- Grid de Funcionalidades -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <!-- Card 1: Menu (Mapa) -->
+                    <div class="bg-gray-50 p-6 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                        <!-- Ícone -->
+                        <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-5">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13v-6m0 6l5.447-2.724A1 1 0 0015 16.382V5.618a1 1 0 00-1.447-.894L9 7m0 0l6 3m-6-3l6-3m0 6l5.447 2.724A1 1 0 0121 16.382V5.618a1 1 0 00-1.447-.894L15 7m-6 0v6m6-3v6"></path></svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Mapa Interativo</h3>
+                        <p class="text-gray-600">Encontre pontos de coleta perto de você, veja o que eles aceitam e trace rotas em segundos.</p>
+                    </div>
+
+                    <!-- Card 2: Carteira -->
+                    <div class="bg-gray-50 p-6 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                        <!-- Ícone -->
+                        <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-5">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Carteira Digital</h3>
+                        <p class="text-gray-600">Ganhe pontos a cada 1kg reciclado e troque por dinheiro via Pix, PayPal ou PagBank.</p>
+                    </div>
+
+                    <!-- Card 3: Informações -->
+                    <div class="bg-gray-50 p-6 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                        <!-- Ícone -->
+                        <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-5">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Informações Úteis</h3>
+                        <p class="text-gray-600">Aprenda a separar seu lixo corretamente, limpar embalagens e compactar recicláveis.</p>
+                    </div>
+
+                    <!-- Card 4: Perfil -->
+                    <div class="bg-gray-50 p-6 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                        <!-- Ícone -->
+                        <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-5">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Perfil e Metas</h3>
+                        <p class="text-gray-600">Veja suas estatísticas, quantas vezes reciclou cada material e acompanhe seu progresso mensal.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
         
-      </div>
-    </section>
-  );
-}
+        <!-- Detalhe 1: Mapa e Rotas -->
+        <section class="py-20 px-6">
+            <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12">
+                <div class="md:w-1/2">
+                    <img src="https://placehold.co/600x450/e0f2f1/10b981?text=Mapa+e+Rotas" 
+                         alt="Demonstração do mapa do app com pontos de coleta e uma rota traçada" 
+                         class="rounded-xl shadow-2xl"
+                         onerror="this.src='https://placehold.co/600x450/e0f2f1/10b981?text=Mapa+e+Rotas'">
+                </div>
+                <div class="md:w-1/2">
+                    <span class="text-emerald-600 font-semibold uppercase">Encontre e Recicle</span>
+                    <h2 class="text-3xl md:text-4xl font-extrabold text-gray-900 mt-3 mb-6">
+                        Nunca foi tão fácil achar um ponto de coleta.
+                    </h2>
+                    <p class="text-lg text-gray-600 mb-4">
+                        Com o acesso à sua localização, nosso mapa mostra todos os pontos de coleta próximos. Clique em um para ver detalhes como endereço, horário e tipos de resíduos aceitos.
+                    </p>
+                    <p class="text-lg text-gray-600">
+                        Quer saber como chegar? A função <strong>"Traçar Rota"</strong> calcula o caminho, a distância em km/metros e o tempo estimado a pé, de bicicleta ou de carro.
+                    </p>
+                </div>
+            </div>
+        </section>
 
-/**
- * NOVA SEÇÃO: Suporte (CTA)
- * Um call-to-action para o servidor de suporte.
- */
-function SupportSection() {
-  return (
-    <section id="support" className="py-24 sm:py-32 bg-slate-950 relative z-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gradient-to-r from-blue-900/50 to-purple-900/50 rounded-2xl p-8 md:p-16 text-center card-glow-border fade-in-up">
-          <div className="flex justify-center mb-6">
-             <div className="flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-                <LifeBuoy className="h-9 w-9" aria-hidden="true" />
-              </div>
-          </div>
-          <h2 className="text-3xl md:text-4xl font-black text-white">
-            Precisa de ajuda ou tem alguma dúvida?
-          </h2>
-          <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-gray-300">
-            A forma mais rápida de obter suporte é entrando em nossa 
-            comunidade oficial no Discord. Nossa equipe está lá para ajudar!
-          </p>
-          <div className="mt-10 flex justify-center">
-            <a
-              href="#" // Link para o servidor do Discord
-              className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-bold rounded-lg text-slate-900 bg-white hover:bg-gray-200 transform-gpu transition-all duration-300 hover:scale-105 shadow-2xl shadow-white/10"
-            >
-              <MessageSquare className="w-5 h-5 mr-2" />
-              Entrar no Servidor de Suporte
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
+        <!-- Detalhe 2: Carteira Digital -->
+        <section class="py-20 px-6 bg-white">
+            <div class="max-w-6xl mx-auto flex flex-col md:flex-row-reverse items-center gap-12">
+                <div class="md:w-1/2">
+                    <img src="https://placehold.co/600x450/e0f2f1/10b981?text=Carteira+Digital" 
+                         alt="Demonstração da carteira digital do app mostrando pontos e opção de saque" 
+                         class="rounded-xl shadow-2xl"
+                         onerror="this.src='https://placehold.co/600x450/e0f2f1/10b981?text=Carteira+Digital'">
+                </div>
+                <div class="md:w-1/2">
+                    <span class="text-emerald-600 font-semibold uppercase">Ganhe Recompensas</span>
+                    <h2 class="text-3xl md:text-4xl font-extrabold text-gray-900 mt-3 mb-6">
+                        Sua atitude sustentável vale dinheiro.
+                    </h2>
+                    <p class="text-lg text-gray-600 mb-4">
+                        Para incentivar a reciclagem, criamos nossa moeda digital. A cada 1kg de material (como plástico, vidro, etc.), você ganha pontos.
+                    </p>
+                    <ul class="text-lg text-gray-600 space-y-3 list-disc list-inside">
+                        <li><span class="font-semibold">1.000 pontos = R$ 1,00</span></li>
+                        <li>Resgate quantos pontos quiser, a qualquer momento.</li>
+                        <li>Receba via <strong>Pix, PayPal ou PagBank.</strong></li>
+                        <li>Processo de saque simples e seguro, com comprovante digital que pode ser baixado ou compartilhado.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Detalhe 3: Perfil e Informações -->
+        <section class="py-20 px-6">
+            <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12">
+                <div class="md:w-1/2">
+                    <img src="https://placehold.co/600x450/e0f2f1/10b981?text=Perfil+e+Estatísticas" 
+                         alt="Demonstração da tela de perfil com gráficos e estatísticas de reciclagem" 
+                         class="rounded-xl shadow-2xl"
+                         onerror="this.src='https://placehold.co/600x450/e0f2f1/10b981?text=Perfil+e+Estatísticas'">
+                </div>
+                <div class="md:w-1/2">
+                    <span class="text-emerald-600 font-semibold uppercase">Evolua e Aprenda</span>
+                    <h2 class="text-3xl md:text-4xl font-extrabold text-gray-900 mt-3 mb-6">
+                        Acompanhe seu impacto e aprenda mais.
+                    </h2>
+                    <p class="text-lg text-gray-600 mb-4">
+                        Na tela <strong>Perfil</strong>, você vê suas estatísticas: total de reciclagens, divisão por material e metas para te incentivar. Um gráfico anual mostra seu desempenho mês a mês.
+                    </p>
+                    <p class="text-lg text-gray-600">
+                        Na aba <strong>Informações</strong>, você encontra dicas essenciais para reciclar da forma certa, como limpar embalagens e separar os materiais corretamente.
+                    </p>
+                </div>
+            </div>
+        </section>
 
+        <!-- Seção Final de CTA (Call to Action) -->
+        <section id="cta" class="bg-emerald-600 text-white">
+            <div class="max-w-4xl mx-auto px-6 py-20 text-center">
+                <h2 class="text-4xl md:text-5xl font-extrabold mb-6">
+                    Pronto para fazer a diferença?
+                </h2>
+                <p class="text-xl text-emerald-100 mb-10">
+                    Baixe o EcoPonto agora e junte-se à comunidade que está mudando o mundo, uma reciclagem de cada vez.
+                </p>
+                <!-- Botões de Download -->
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <a href="#" class="flex items-center justify-center bg-white text-emerald-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition duration-300 shadow-lg">
+                        <!-- Ícone Apple -->
+                        <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12.001 2.457c-2.43 0-4.22 1.583-5.41 3.936-.128.243-.23.498-.306.762-.63 2.112-1.096 4.344-1.096 6.68 0 4.218 1.81 8.165 4.542 8.165 1.45 0 2.54-1.007 3.999-1.007 1.41 0 2.44 1.007 3.999 1.007 2.782 0 4.542-3.947 4.542-8.165 0-2.336-.465-4.568-1.096-6.68a5.14 5.14 0 0 0-.306-.762C16.22 4.04 14.43 2.457 12.001 2.457Zm-.35 1.543c1.018.01 2.22.67 3.001 1.637-1.11 1.303-1.63 3.05-1.503 4.86.06.87.35 1.71.82 2.41-.95.84-2.18 1.4-3.5 1.41-1.02-.01-2.22-.67-3.001-1.638 1.11-1.303 1.63-3.05 1.503-4.86-.05-.87-.35-1.71-.82-2.41.95-.84 2.18-1.4 3.5-1.41Z"></path></svg>
+                        Baixe na <span class="font-bold ml-1">App Store</span>
+                    </a>
+                    <a href="#" class="flex items-center justify-center bg-white text-emerald-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition duration-300 shadow-lg">
+                        <!-- Ícone Google Play -->
+                        <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" d="M2.378 1.642c-.59.32-1.018.86-.96 1.581l.012.03.018.055 3.57 6.44-3.57 6.44a1.8 1.8 0 0 0 .96 2.441l.056.03.05.025 11.83-6.143a.35.35 0 0 1 0-.61L2.484 1.696l-.05-.025-.056-.03ZM15.42 12.35l3.57 2.011-3.69 3.69-3.57-3.69 3.69-2.011ZM11.73 12 8.04 8.31l3.69-3.69 3.57 3.69L11.73 12Z" clip-rule="evenodd"></path></svg>
+                        Disponível no <span class="font-bold ml-1">Google Play</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
 
-/**
- * Rodapé
- * Contém links de navegação, sociais e copyright.
- */
-function Footer() {
-  const footerLinks = {
-    Produto: [
-      { name: 'Comandos', href: '#commands' }, // ATUALIZADO
-      { name: 'Painel', href: '#' },
-      { name: 'Status', href: '#' },
-    ],
-    Comunidade: [
-      { name: 'Servidor de Suporte', href: '#support' }, // ATUALIZADO
-      { name: 'Github', href: '#' },
-      { name: 'Twitter', href: '#' },
-    ],
-    Legal: [
-      { name: 'Política de Privacidade', href: '#' },
-      { name: 'Termos de Serviço', href: '#' },
-    ],
-  };
-  
-  const socialIcons = [
-    { name: 'Twitter', href: '#', icon: Twitter },
-    { name: 'GitHub', href: '#', icon: Github },
-    { name: 'Discord', href: '#', icon: MessageSquare },
-  ];
-
-  return (
-    <footer className="bg-slate-950 border-t border-blue-900/30" aria-labelledby="footer-heading">
-      <h2 id="footer-heading" className="sr-only">
-        Rodapé
-      </h2>
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8">
-        <div className="xl:grid xl:grid-cols-3 xl:gap-8">
-          
-          {/* Coluna 1: Logo e Social */}
-          <div className="space-y-8 xl:col-span-1">
-            <a href="#" className="flex-shrink-0 flex items-center gap-2">
-              <Lock className="w-7 h-7 text-blue-400 text-glow-blue" />
-              <span className="text-2xl font-black text-white text-glow-blue">
-                Privacy
-              </span>
-            </a>
-            <p className="text-gray-400 text-base max-w-xs">
-              Segurança e moderação de ponta para sua comunidade no Discord.
-            </p>
-            <div className="flex space-x-6">
-              {socialIcons.map((item) => (
-                <a key={item.name} href={item.href} className="text-gray-400 hover:text-white transition-colors duration-200">
-                  <span className="sr-only">{item.name}</span>
-                  <item.icon className="h-6 w-6" aria-hidden="true" />
+    <!-- Rodapé -->
+    <footer class="bg-gray-900 text-gray-400">
+        <div class="max-w-6xl mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center text-center md:text-left">
+            <div>
+                <a href="#" class="text-2xl font-bold text-white mb-2">
+                    EcoPonto
                 </a>
-              ))}
+                <p class="text-sm">Mudando o mundo, uma reciclagem de cada vez.</p>
             </div>
-          </div>
-          
-          {/* Colunas 2 e 3: Links */}
-          <div className="mt-12 grid grid-cols-2 gap-8 xl:mt-0 xl:col-span-2">
-            <div className="md:grid md:grid-cols-2 md:gap-8">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-300 tracking-wider uppercase">Produto</h3>
-                <ul className="mt-4 space-y-4">
-                  {footerLinks.Produto.map((item) => (
-                    <li key={item.name}>
-                      <a href={item.href} className="text-base text-gray-400 hover:text-white transition-colors duration-200">
-                        {item.name}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="mt-12 md:mt-0">
-                <h3 className="text-sm font-semibold text-gray-300 tracking-wider uppercase">Comunidade</h3>
-                <ul className="mt-4 space-y-4">
-                  {footerLinks.Comunidade.map((item) => (
-                    <li key={item.name}>
-                      <a href={item.href} className="text-base text-gray-400 hover:text-white transition-colors duration-200">
-                        {item.name}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            <div class="flex space-x-6 mt-6 md:mt-0">
+                <a href="#" class="hover:text-white transition duration-300">Termos de Uso</a>
+                <a href="#" class="hover:text-white transition duration-300">Política de Privacidade</a>
+                <a href="#" class="hover:text-white transition duration-300">Contato</a>
             </div>
-            <div className="md:grid md:grid-cols-1 md:gap-8">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-300 tracking-wider uppercase">Legal</h3>
-                <ul className="mt-4 space-y-4">
-                  {footerLinks.Legal.map((item) => (
-                    <li key={item.name}>
-                      <a href={item.href} className="text-base text-gray-400 hover:text-white transition-colors duration-200">
-                        {item.name}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
         </div>
-        
-        {/* Copyright */}
-        <div className="mt-12 border-t border-gray-800 pt-8">
-          <p className="text-base text-gray-500 xl:text-center">
-            &copy; {new Date().getFullYear()} Privacy Bot. Todos os direitos reservados.
-          </p>
+        <div class="border-t border-gray-800">
+            <p class="max-w-6xl mx-auto px-6 py-6 text-center text-sm">
+                &copy; 2025 EcoPonto. Todos os direitos reservados.
+            </p>
         </div>
-      </div>
     </footer>
-  );
-}
 
-
+</body>
+</html>
